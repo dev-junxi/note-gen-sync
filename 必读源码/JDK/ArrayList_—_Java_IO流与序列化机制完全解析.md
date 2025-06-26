@@ -32,19 +32,19 @@ public class StreamDemo {
     public static void main(String[] args) {
         String sourceFile = "source.txt";
         String targetFile = "target.txt";
-      
+  
         try (InputStream in = new FileInputStream(sourceFile);
              OutputStream out = new FileOutputStream(targetFile)) {
-          
+      
             byte[] buffer = new byte[8192]; // 8KB缓冲区
             int bytesRead;
-          
+      
             while ((bytesRead = in.read(buffer)) != -1) {
                 out.write(buffer, 0, bytesRead);
             }
-          
+      
             System.out.println("文件复制完成！");
-          
+      
         } catch (FileNotFoundException e) {
             System.err.println("文件未找到: " + e.getMessage());
         } catch (IOException e) {
@@ -110,7 +110,7 @@ private void readObject(java.io.ObjectInputStream s)
         // 安全检查
         SharedSecrets.getJavaObjectInputStreamAccess()
             .checkArray(s, Object[].class, size);
-      
+  
         // 创建精确大小的数组
         Object[] elements = new Object[size];
         for (int i = 0; i < size; i++) {
@@ -165,5 +165,3 @@ private void writeObject(ObjectOutputStream out) throws IOException {
 - **OutputStream**：将包裹派送给收件人（你的仓库→外部）
 - **ObjectOutputStream**：能够打包特殊物品（Java对象）
 - **ArrayList序列化**：只运送实际有货的格子，忽略空位
-
-这样类比，是不是对Java I/O的理解瞬间清晰了呢？
