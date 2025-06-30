@@ -4,23 +4,48 @@
 
 ## 一、Bean的完整生命周期
 
-1. **呱呱坠地 - 实例化(Instantiation)**：通过构造函数或工厂方法创建Bean实例，相当于Bean的"出生"
-2. **营养补给 - 属性赋值(Populate properties)**：通过Setter方法或字段注入为Bean注入依赖，就像给婴儿喂奶
-3. **学前培训 - BeanPostProcessor前置处理**：调用`postProcessBeforeInitialization`方法，相当于上学前的预备教育
-4. **正式入学 - 初始化(Initialization)**：
-   - 调用`InitializingBean.afterPropertiesSet()`方法（如果实现了该接口）
-   - 调用自定义的`init-method`（如果有配置）
-5. **结业典礼 - BeanPostProcessor后置处理**：调用`postProcessAfterInitialization`方法
-6. **社会工作 - 使用中(In use)**：Bean处于可用状态，被应用程序使用
-7. **光荣退休 - 销毁(Destruction)**：
-   - 调用`DisposableBean.destroy()`方法（如果实现了该接口）
-   - 调用自定义的`destroy-method`（如果有配置）
+
+1. **Spring 容器读取配置文件，识别出 Bean 的定义。**
+2. **Spring 利用反射创建 Bean 实例。**
+3. **为 Bean 设置属性（调用 setXxx() 方法注入依赖）。**
+4. **如果实现了 BeanNameAware 接口：**
+
+   * **调用** setBeanName(String name)**，注入 Bean 的名字。**
+5. **如果实现了 BeanClassLoaderAware 接口：**
+
+   * **调用** setBeanClassLoader(ClassLoader classLoader)**，注入类加载器。**
+6. **如果实现了 BeanFactoryAware 接口：**
+
+   * **调用** setBeanFactory(BeanFactory beanFactory)**，注入 BeanFactory 实例。**
+7. **如果实现了其他 \*.Aware 接口：**
+
+   * 调用相应的** **setXxx()** **方法，注入 Spring 内部资源。
+8. **如果有实现 BeanPostProcessor（前置处理器）：**
+
+   * **执行** postProcessBeforeInitialization(Object bean, String beanName)** **方法。
+
+   ✅ 执行 @PostConstruct 方法
+9. **如果实现了 InitializingBean 接口：**
+
+   * **执行** afterPropertiesSet()** **方法。
+10. **如果配置了 init-method 属性：**
+
+    * 执行指定的初始化方法。
+11. **如果有实现 BeanPostProcessor（后置处理器）：**
+
+    * **执行** postProcessAfterInitialization(Object bean, String beanName)** **方法。
+12. **当容器销毁 Bean 时：**
+
+    * ✅ 执行 @PreDestroy 方法
+    * **如果实现了** DisposableBean** **接口，调用** **destroy()** **方法。
+    * 如果配置了** **destroy-method** **属性，调用指定的销毁方法。
 
 ## 二、Spring提供的扩展点宝库
 
 ### 1. Bean级别的扩展工具
 
 #### ① BeanPostProcessor接口 - 万能拦截器
+
 ```java
 // 在所有Bean初始化前后插入自定义逻辑
 public interface BeanPostProcessor {
@@ -30,6 +55,7 @@ public interface BeanPostProcessor {
 ```
 
 #### ② InstantiationAwareBeanPostProcessor接口 - 精细控制
+
 ```java
 // 在Bean实例化前后插入自定义逻辑
 public interface InstantiationAwareBeanPostProcessor extends BeanPostProcessor {
@@ -40,6 +66,7 @@ public interface InstantiationAwareBeanPostProcessor extends BeanPostProcessor {
 ```
 
 #### ③ InitializingBean和DisposableBean接口 - 生命周期回调
+
 ```java
 // 自定义初始化和销毁逻辑
 public interface InitializingBean {
@@ -51,6 +78,7 @@ public interface DisposableBean {
 ```
 
 #### ④ @PostConstruct和@PreDestroy注解 - 优雅的方式
+
 ```java
 // JSR-250标准注解，用于标注初始化后和销毁前的方法
 @PostConstruct
@@ -63,6 +91,7 @@ public void cleanup() { /*...*/ }
 ### 2. 容器级别的扩展工具
 
 #### ① BeanFactoryPostProcessor接口 - 容器配置大师
+
 ```java
 // 在Bean定义加载后，Bean实例化前修改Bean的定义
 public interface BeanFactoryPostProcessor {
@@ -71,6 +100,7 @@ public interface BeanFactoryPostProcessor {
 ```
 
 #### ② BeanDefinitionRegistryPostProcessor接口 - 高级配置大师
+
 ```java
 // 在标准BeanFactoryPostProcessor之前执行，可以新增Bean定义
 public interface BeanDefinitionRegistryPostProcessor extends BeanFactoryPostProcessor {
@@ -117,30 +147,30 @@ public interface EnvironmentAware { /* 设置Environment对象 */ }
 ```java
 @Service
 public class UserService implements InitializingBean, DisposableBean {
-    
+  
     @Autowired
     private DataSource dataSource;
-    
+  
     @PostConstruct
     public void checkConfig() {
         System.out.println("检查基本配置...");
     }
-    
+  
     @Override
     public void afterPropertiesSet() throws Exception {
         System.out.println("验证数据库连接...");
         dataSource.getConnection().close();
     }
-    
+  
     public void customInit() {
         System.out.println("自定义初始化方法");
     }
-    
+  
     @PreDestroy
     public void preCleanup() {
         System.out.println("准备清理资源...");
     }
-    
+  
     @Override
     public void destroy() throws Exception {
         System.out.println("释放所有资源...");
